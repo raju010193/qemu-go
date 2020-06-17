@@ -91,9 +91,9 @@ func connectMachine(socketPath string){
         panic(err)
 	}
 	fmt.Println(c)
-    //defer c.Close()
+    defer c.Close()
 
-	//reader(c)
+	reader(c)
 	fmt.Println("its done")
     // for {
 		
