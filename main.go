@@ -2,18 +2,19 @@ package main
 
 import (
 	"github.com/raju/go-qemu-ex/qemu"
+	"github.com/raju/go-qemu-ex/qmp"
 		"log"
 		"fmt"
-		"net"
+		// "net"
 		"io"
 		//"time"
 		)
 		const (
-			GiB = 10737418240 // 10 GiB 
+			GiB = 1073741824 // 10 GiB 
 		)
 
 func createImage(imageName string){
-		img := qemu.NewImage(imageName, qemu.ImageFormatQCOW2, 5*GiB)
+		img := qemu.NewImage(imageName, qemu.ImageFormatQCOW2, 10*GiB)
 		img.SetBackingFile(imageName)
 	
 		err := img.Create()
@@ -64,6 +65,7 @@ func createMachine(socketPath string, imageName string, isoImagePath string){
 	m.AddDriveImage(img)
 	m.AddCDRom(isoImagePath)
 	m.AddMonitorUnix(socketPath)
+	m.SetDisplay("none")
 	//m.SetDisplay("vga")
 
 	pid, err := m.Start("x86_64", false) // x86_64 arch (using qemu-system-x86_64), with kvm
@@ -86,32 +88,47 @@ func reader(r io.Reader) {
 }
 
 func connectMachine(socketPath string){
-	c, err := net.Dial("unix", socketPath)
-    if err != nil {
-        panic(err)
-	}
-	fmt.Println(c)
-    defer c.Close()
+		// Connection to QMP
+		c, err := qmp.Open("unix", socketPath)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	reader(c)
-	fmt.Println("its done")
-    // for {
-		
-	// 	a, err := c.Write([]byte("hi"))
-	// 	fmt.Println("ineer data", a)
-    //     if err != nil {
-    //         log.Fatal("write error:", err)
-    //         break
-    //     }
-    //     time.Sleep(10)
-	// }
-	fmt.Println("its last one")
+		defer c.Close()
+
+		// Execute simple QMP command
+		result, err := c.Command("query-status", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("query status")
+		fmt.Println(result)
+
+		// Execute QMP command with arguments
+
+		args := map[string]interface{} {"device": "ide1-cd0"}
+		fmt.Println(args)
+
+		result, err = c.Command("eject", args)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("eject status")
+		fmt.Println(result)
+		// Execute HMP command
+		result, err = c.HumanMonitorCommand("savevm checkpoint")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("monistor status")
+		fmt.Println(result)
+		fmt.Println("connection done")
 }
 func  main()  {
-	unixSocket := "qmp.sock"
-	isoImagePath := "/home/swamym/Downloads/ubuntu-20.04-desktop-amd64.iso"
-	imageName := "ubuntu-debian.qcow2"
- 	createMachine(unixSocket,imageName,isoImagePath)
+	unixSocket := "qmp1.sock"
+	// isoImagePath := "/home/swamym/Downloads/ubuntu-18.04.4-desktop-amd64.iso"
+	// imageName := "ubuntu-debian181.qcow2"
+ 	// createMachine(unixSocket,imageName,isoImagePath)
  	fmt.Println("machine created")
  	 connectMachine(unixSocket)
 
