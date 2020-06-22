@@ -49,22 +49,15 @@ func createMachine(socketPath string, imageName string, isoImagePath string){
 	for _, snapshot := range snaps {
 		fmt.Println(snapshot.Name, snapshot.Date)
 	}
-	// img, err := qemu.OpenImage("debian.qcow2")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-
-	// d := qemu.Drive{
-	// 	Path:"debian.qcow2",
-	// 	Format:"qcow2",/tmp/qmp-socket
-	// }
-
 	m := qemu.NewMachine(1, 2024) // 1 CPU, 512MiB RAM
 	// m.AddDrive(d)
+	// add image to drive
 	m.AddDriveImage(img)
+   // add iso file
 	m.AddCDRom(isoImagePath)
+	// add unix path
 	m.AddMonitorUnix(socketPath)
+	// set display if its None its not display the GUI otherwise it's
 	m.SetDisplay("none")
 	//m.SetDisplay("vga")
 
@@ -125,11 +118,16 @@ func connectMachine(socketPath string){
 		fmt.Println("connection done")
 }
 func  main()  {
+	// unix path
 	unixSocket := "qmp1.sock"
-	// isoImagePath := "/home/swamym/Downloads/ubuntu-18.04.4-desktop-amd64.iso"
-	// imageName := "ubuntu-debian181.qcow2"
- 	// createMachine(unixSocket,imageName,isoImagePath)
- 	fmt.Println("machine created")
+	// iso image path
+	isoImagePath := "/home/swamym/Downloads/ubuntu-18.04.4-desktop-amd64.iso"
+	// image name
+	imageName := "ubuntu-debian181.qcow2"
+	// create new machine
+ 	createMachine(unixSocket,imageName,isoImagePath)
+	 fmt.Println("machine created")
+	 // connect machine through unix path
  	 connectMachine(unixSocket)
 
 }
