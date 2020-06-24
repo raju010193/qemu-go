@@ -8,6 +8,8 @@ import (
 		// "net"
 		"io"
 		//"time"
+		"os"
+		"reflect"
 		)
 		const (
 			GiB = 1073741824 // 10 GiB 
@@ -26,12 +28,12 @@ func createMachine(socketPath string, imageName string, isoImagePath string){
 	img, err := qemu.OpenImage(imageName)
 	if err != nil {
 		//log.Fatal(err)
-		createImage(imageName)
-		newimg, err := qemu.OpenImage(imageName)
-		if err != nil {
-			log.Fatal(err)			
-		}
-		img = newimg
+		// createImage(imageName)
+		// newimg, err := qemu.OpenImage(imageName)
+		// if err != nil {
+		// 	log.Fatal(err)			
+		// }
+		// img = newimg
 	}
 
 	fmt.Println("image", img.Path, "format", img.Format, "size", img.Size)
@@ -107,6 +109,7 @@ func connectMachine(socketPath string){
 			log.Fatal(err)
 		}
 		fmt.Println("eject status")
+		fmt.Println(c.AsyncMessages)
 		fmt.Println(result)
 		// Execute HMP command
 		result, err = c.HumanMonitorCommand("savevm checkpoint")
@@ -115,19 +118,67 @@ func connectMachine(socketPath string){
 		}
 		fmt.Println("monistor status")
 		fmt.Println(result)
+		fmt.Println(c.Greeting)
+		fmt.Println(reflect.TypeOf(c)) 
+		
+		//c.Read()
+		fmt.Println(result)
 		fmt.Println("connection done")
 }
 func  main()  {
 	// unix path
-	unixSocket := "qmp1.sock"
+	var unixSocket string
+	var imageName string
+	var value int
+
+	
 	// iso image path
 	isoImagePath := "/home/swamym/Downloads/ubuntu-18.04.4-desktop-amd64.iso"
 	// image name
-	imageName := "ubuntu-debian181.qcow2"
+	
 	// create new machine
- 	createMachine(unixSocket,imageName,isoImagePath)
-	 fmt.Println("machine created")
+ 	//createMachine(unixSocket,imageName,isoImagePath)
+	 //fmt.Println("machine created")
 	 // connect machine through unix path
- 	 connectMachine(unixSocket)
+	  //connectMachine(unixSocket)
+
+	  fmt.Println("Enter unixsocket file name")
+	  fmt.Scanf("%s",&unixSocket)
+	  fmt.Println("Enter Image File name example 'ubuntu.qcow2'")
+	  fmt.Scanf("%s",&imageName)
+	  if imageName == ""{
+		imageName = "ubuntu-debian181.qcow2"
+	  }
+	
+	  if unixSocket ==""{
+		unixSocket = "qmp1.sock"
+	  }
+	  
+	  for {
+		  fmt.Println("1. create new machine \n 2. create or open vm \n 3. connect vm through unix path \n4. exit")
+		fmt.Println("enter your choice!")
+		fmt.Scanf("%d",&value)
+
+		  switch value {
+		  case 1: 
+			 createImage(imageName)
+			 fmt.Println("image has been created")
+			 break
+		  case 2:
+			createMachine(unixSocket,imageName,isoImagePath)
+			fmt.Println("vm machine has been created or opened")
+		  case 3:
+			connectMachine(unixSocket)
+			fmt.Println("unix socket connected")
+		  default:
+			fmt.Println("console exit")
+			os.Exit(3)
+			break
+			  
+		  }
+		  if false{
+			  break
+		  }
+	  }
 
 }
